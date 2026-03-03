@@ -1,144 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Mylston Manor Stitches Generator</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
-        input, select, button { margin: 5px 0; padding: 5px; font-size: 1em; }
-        .output { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
-    </style>
+<meta charset="UTF-8">
+<title>Mylston Manor Stitches Generator</title>
+<style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
+    input, button { margin: 5px 0; padding: 6px; font-size: 1em; }
+    .output { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
+</style>
 </head>
 <body>
-    <h1>Mylston Manor Stitches Generator</h1>
 
-    <!-- Add / Remove Project -->
-    <h2>Add / Remove Project</h2>
-    <p>Format to add: + ProjectName Size (example: + Pomegranate medium)</p>
-    <p>Format to remove: - ProjectName (example: - Pomegranate)</p>
-    <input type="text" id="projectInput" placeholder="+ ProjectName Size or - ProjectName" size="50">
-    <button onclick="processProject()">Submit</button>
+<h1>Mylston Manor Stitches Generator</h1>
 
-    <h2>Get Stitch Goal by Project Name</h2>
-    <input type="text" id="goalInput" placeholder="Enter project name">
-    <button onclick="getStitchGoal()">Get Goal</button>
+<h2>Add / Remove Project</h2>
+<p>Add: + ProjectName Size</p>
+<p>Remove: - ProjectName</p>
+<input type="text" id="projectInput" placeholder="+ Pomegranate medium or - Pomegranate" size="50">
+<br>
+<button onclick="processProject()">Submit</button>
 
-    <h2>Determine Project Size from Stitch Count</h2>
-    <input type="number" id="stitchCount" placeholder="Enter stitch count">
-    <button onclick="getSizeFromCount()">Get Size</button>
+<h2>Get Stitch Goal</h2>
+<input type="text" id="goalInput" placeholder="Enter project name">
+<button onclick="getStitchGoal()">Get Goal</button>
 
-    <div class="output" id="output"></div>
-    <div class="output" id="projectsList"></div>
+<h2>Determine Size from Stitch Count</h2>
+<input type="number" id="stitchCount" placeholder="Enter stitch count" min="0">
+<button onclick="getSizeFromCount()">Get Size</button>
 
-    <script>
-        // --- Project dictionary ---
-        let projects = JSON.parse(localStorage.getItem("projects")) || {
-            "whales": "small",
-            "needlelot sal": "large",
-            "pomagranate birds": "medium",
-            "somewhere west": "exlarge",
-            "temprature moon": "large",
-            "afternoon nap": "large"
-          };
-        
-        function saveProjects() {
-        localStorage.setItem("projects", JSON.stringify(projects));
+<div class="output" id="output"></div>
+<div class="output" id="projectsList"></div>
+
+<script>
+
+// ================================
+// LOAD OR CREATE PROJECT STORAGE
+// ================================
+let projects = JSON.parse(localStorage.getItem("projects")) || {
+    "whales": "small",
+    "needlelot sal": "large",
+    "pomagranate birds": "medium",
+    "somewhere west": "exlarge",
+    "temprature moon": "large",
+    "afternoon nap": "large"
+};
+
+function saveProjects() {
+    localStorage.setItem("projects", JSON.stringify(projects));
+}
+
+// ================================
+// GOAL RANGES
+// ================================
+const goalRanges = {
+    "petite": [5, 50, 5],
+    "small": [10, 100, 5],
+    "medium": [25, 250, 10],
+    "large": [50, 500, 25],
+    "exlarge": [100, 1000, 50]
+};
+
+// ================================
+// SIZE FROM STITCH COUNT
+// ================================
+function sizeFromStitches(count) {
+    if (count <= 500) return "petite";
+    if (count <= 2500) return "small";
+    if (count <= 10000) return "medium";
+    if (count <= 50000) return "large";
+    return "exlarge";
+}
+
+// ================================
+// RANDOM GOAL GENERATOR
+// ================================
+function randomGoal(size) {
+    const [low, high, step] = goalRanges[size];
+    const numSteps = Math.floor((high - low) / step) + 1;
+    return low + step * Math.floor(Math.random() * numSteps);
+}
+
+// ================================
+// UPDATE PROJECT DISPLAY
+// ================================
+function updateProjectList() {
+    let html = "<strong>Current Projects:</strong><br>";
+    for (const [name, size] of Object.entries(projects)) {
+        html += `${name} (${size})<br>`;
+    }
+    document.getElementById("projectsList").innerHTML = html;
+}
+
+// ================================
+// ADD / REMOVE PROJECT
+// ================================
+function processProject() {
+
+    const input = document.getElementById("projectInput").value.trim();
+    if (!input) return;
+
+    const parts = input.split(" ");
+    const action = parts[0];
+
+    if (action === '+') {
+
+        if (parts.length < 3) {
+            alert("Format: + ProjectName Size");
+            return;
         }
 
-        // --- Goal ranges per size ---
-        const goalRanges = {
-            "petite": [5, 50, 5],
-            "small": [10, 100, 5],
-            "medium": [25, 250, 10],
-            "large": [50, 500, 25],
-            "exlarge": [100, 1000, 50]
-        };
+        const size = parts[parts.length - 1].toLowerCase();
 
-        // --- Determine size from stitch count ---
-        function sizeFromStitches(count) {
-            if (count <= 500) return "petite";
-            if (count <= 2500) return "small";
-            if (count <= 10000) return "medium";
-            if (count <= 50000) return "large";
-            return "exlarge";
+        if (!(size in goalRanges)) {
+            alert("Invalid size. Options: petite, small, medium, large, exlarge");
+            return;
         }
 
-        function randomGoal(size) {
-            const [low, high, step] = goalRanges[size];
-            const numSteps = Math.floor((high - low) / step) + 1;
-            return low + step * Math.floor(Math.random() * numSteps);
+        const name = parts.slice(1, -1).join(" ").toLowerCase();
+
+        projects[name] = size;
+        saveProjects();
+
+        document.getElementById("output").innerHTML =
+            `Added '${name}' (${size}).`;
+
+    } else if (action === '-') {
+
+        const name = parts.slice(1).join(" ").toLowerCase();
+
+        if (projects[name]) {
+            delete projects[name];
+            saveProjects();
+            document.getElementById("output").innerHTML =
+                `Removed '${name}'.`;
+        } else {
+            document.getElementById("output").innerHTML =
+                `Project not found.`;
         }
 
-        function updateProjectList() {
-            let html = "<strong>Current Projects:</strong><br>";
-            for (const [name, size] of Object.entries(projects)) {
-                html += `${name} (${size})<br>`;
-            }
-            document.getElementById("projectsList").innerHTML = html;
-        }
+    } else {
+        document.getElementById("output").innerHTML =
+            "Invalid command. Use + or -";
+    }
 
-        function processProject() {
-            const input = document.getElementById("projectInput").value.trim();
-            if (!input) return;
+    updateProjectList();
+    document.getElementById("projectInput").value = "";
+}
 
-            const parts = input.split(" ");
-            const action = parts[0];
-            let name, size;
+// ================================
+// GET STITCH GOAL
+// ================================
+function getStitchGoal() {
 
-            if (action === '+') {
-                if (parts.length < 3) {
-                    alert("Invalid input. Format: + ProjectName Size");
-                    return;
-                }
-                size = parts[parts.length - 1].toLowerCase();
-                if (!(size in goalRanges)) {
-                    alert("Invalid size. Choose from: " + Object.keys(goalRanges).join(", "));
-                    return;
-                }
-                name = parts.slice(1, -1).join(" ").toLowerCase();
-                projects[name] = size;
-                document.getElementById("output").innerHTML = `Added project '${name}' with size '${size}'.`;
-            } else if (action === '-') {
-                name = parts.slice(1).join(" ").toLowerCase();
-                if (projects[name]) {
-                    projects[ndelete projects[name]; saveProjects();
-                    document.getElementById("output").innerHTML = `Removed project '${name}'.`;
-                } else {
-                    document.getElementById("output").innerHTML = `Project '${name}' not found.`;
-                }
-            } else {
-                document.getElementById("output").innerHTML = "Invalid action. Use + to add or - to remove.";
-            }
+    const name = document.getElementById("goalInput").value.trim().toLowerCase();
 
-            updateProjectList();
-            document.getElementById("projectInput").value = "";
-        }
+    if (!projects[name]) {
+        document.getElementById("output").innerHTML =
+            "Project not found.";
+        return;
+    }
 
-        function getStitchGoal() {
-            const name = document.getElementById("goalInput").value.trim().toLowerCase();
-            if (!projects[name]) {
-                document.getElementById("output").innerHTML = `Project '${name}' not found.`;
-                return;
-            }
-            const size = projects[name];
-            const goal = randomGoal(size);
-            document.getElementById("output").innerHTML = `'${name}' is a ${size} project. Stitch goal: ${goal}`;
-            document.getElementById("goalInput").value = "";
-        }
+    const size = projects[name];
+    const goal = randomGoal(size);
 
-        function getSizeFromCount() {
-            const count = parseInt(document.getElementById("stitchCount").value);
-            if (isNaN(count) || count < 0) {
-                document.getElementById("output").innerHTML = "Please enter a valid stitch count.";
-                return;
-            }
-            const size = sizeFromStitches(count);
-            document.getElementById("output").innerHTML = `A project with ${count} stitches is '${size}'.`;
-            document.getElementById("stitchCount").value = "";
-        }
+    document.getElementById("output").innerHTML =
+        `'${name}' is ${size}. Stitch goal: ${goal}`;
 
-        // Initialize project list
-        updateProjectList();
-    </script>
+    document.getElementById("goalInput").value = "";
+}
+
+// ================================
+// GET SIZE FROM COUNT
+// ================================
+function getSizeFromCount() {
+
+    const count = parseInt(document.getElementById("stitchCount").value);
+
+    if (isNaN(count) || count < 0) {
+        document.getElementById("output").innerHTML =
+            "Enter valid stitch count.";
+        return;
+    }
+
+    const size = sizeFromStitches(count);
+
+    document.getElementById("output").innerHTML =
+        `${count} stitches = ${size}`;
+
+    document.getElementById("stitchCount").value = "";
+}
+
+// Initialize
+updateProjectList();
+
+</script>
 </body>
 </html>
