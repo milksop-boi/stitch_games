@@ -32,23 +32,30 @@
 <div class="output" id="projectsList"></div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function() {
 
-// ================================
-// LOAD OR CREATE PROJECT STORAGE
-// ================================
-let projects = JSON.parse(localStorage.getItem("projects")) || {
-    "whales": "small",
-    "needlelot sal": "large",
-    "pomagranate birds": "medium",
-    "somewhere west": "exlarge",
-    "temprature moon": "large",
-    "afternoon nap": "large"
-};
+let projects;
+
+try {
+    projects = JSON.parse(localStorage.getItem("projects")) || {};
+} catch {
+    projects = {};
+}
+
+if (Object.keys(projects).length === 0) {
+    projects = {
+        "whales": "small",
+        "needlelot sal": "large",
+        "pomagranate birds": "medium",
+        "somewhere west": "exlarge",
+        "temprature moon": "large",
+        "afternoon nap": "large"
+    };
+}
 
 function saveProjects() {
     localStorage.setItem("projects", JSON.stringify(projects));
 }
-
 // ================================
 // GOAL RANGES
 // ================================
@@ -193,6 +200,7 @@ function getSizeFromCount() {
 // Initialize
 updateProjectList();
 
+});
 </script>
 </body>
 </html>
