@@ -32,7 +32,7 @@
 
     <script>
         // --- Project dictionary ---
-        const projects = {
+        let projects = JSON.parse(localStorage.getItem("projects")) || {
             "whales": "small",
             "needlelot sal": "large",
             "pomagranate birds": "medium",
@@ -40,6 +40,10 @@
             "temprature moon": "large",
             "afternoon nap": "large"
           };
+        
+        function saveProjects() {
+        localStorage.setItem("projects", JSON.stringify(projects));
+        }
 
         // --- Goal ranges per size ---
         const goalRanges = {
@@ -97,7 +101,7 @@
             } else if (action === '-') {
                 name = parts.slice(1).join(" ").toLowerCase();
                 if (projects[name]) {
-                    delete projects[name];
+                    projects[ndelete projects[name]; saveProjects();
                     document.getElementById("output").innerHTML = `Removed project '${name}'.`;
                 } else {
                     document.getElementById("output").innerHTML = `Project '${name}' not found.`;
